@@ -5,6 +5,16 @@
   text-align: center;
 }
 
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  #root {
+    padding: 1rem;
+  }
+  .card {
+    padding: 1rem;
+  }
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

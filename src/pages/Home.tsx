@@ -5,6 +5,27 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen, Users, Award, Star } from 'lucide-react';
 
 const Home = () => {
+  const courses = [
+    {
+      title: 'قرآن مجید',
+      description: 'Learn to read the Quran with proper Tajweed',
+      duration: '6 months',
+      buttonText: 'Learn More →'
+    },
+    {
+      title: 'حفظ القرآن',
+      description: 'Memorize the Holy Quran with guidance',
+      duration: '2-3 years',
+      buttonText: 'Learn More →'
+    },
+    {
+      title: 'تجوید القرآن',
+      description: 'Master the rules of Quranic recitation',
+      duration: '3 months',
+      buttonText: 'Learn More →'
+    }
+  ];
+
   const features = [
     {
       icon: BookOpen,
@@ -33,7 +54,7 @@ const Home = () => {
               فہم القرآن
             </h1>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Fahm Ul Quran
+              FAHM-UL-QURAN
             </h2>
             <p className="text-xl md:text-2xl mb-8 text-primary-foreground/90">
               "He gives wisdom to whom He wills, and whoever has been given wisdom has certainly been given much good."
@@ -69,7 +90,7 @@ const Home = () => {
                     Allama Maulana Mufti Muhammad Ashfaq Salikabadi Rehmani
                   </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    supervising Quran translation and tafseer programs. His book <strong>“Rooh-Ul-Quran”</strong> is taught as a curriculum text in Rehmania institutes as well as other madaris. He also serves as the Khateeb and Imam of Jamia Masjid Rehmania, E-4 Block 8, Gulshan-e-Iqbal, Karachi.
+                    Supervising Quran translation and tafseer programs. His book <strong>“Rooh-Ul-Quran”</strong> is taught as a curriculum text in Rehmania institutes as well as other madaris. He also serves as the Khateeb and Imam of Jamia Masjid Rehmania, E-4 Block 8, Gulshan-e-Iqbal, Karachi.
 
 
                   </p>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Clock, Users, Award, Star } from 'lucide-react';
+import { mainCourse, otherCourses } from '@/lib/courseData';
 
 const Courses = () => {
   const mainCourse = {
@@ -142,7 +143,7 @@ const Courses = () => {
           <div className="max-w-4xl mx-auto">
             <Card className="card-shadow border-2 border-primary/20">
               <CardHeader className="text-center pb-4">
-                <div className="flex justify-center items-center space-x-6 mb-4">
+                <div className="flex flex-wrap justify-center items-center gap-3 mb-4">
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     <span>{mainCourse.duration}</span>
@@ -159,12 +160,12 @@ const Courses = () => {
               </CardHeader>
               
               <CardContent>
-                <p className="text-lg text-center text-muted-foreground mb-8">
+                <p className="text-lg text-center text-muted-foreground mb-8 break-words">
                   {mainCourse.description}
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-8">
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-xl font-semibold mb-4 text-primary">Course Features</h3>
                     <ul className="space-y-3">
                       {mainCourse.features.map((feature, index) => (
@@ -176,15 +177,15 @@ const Courses = () => {
                     </ul>
                   </div>
 
-                  <div className="text-center">
-                    <div className="bg-muted/50 rounded-lg p-6 mb-6">
-                      <div className="text-3xl font-bold text-primary mb-2">
+                  <div className="text-center min-w-0">
+                    <div className="bg-muted/50 rounded-lg p-6 mb-6 w-full sm:w-auto inline-block">
+                      <div className="text-3xl font-bold text-primary mb-2 break-words">
                         {mainCourse.price}
                       </div>
                       <div className="text-sm text-muted-foreground mb-4">
                         Full Course Fee
                       </div>
-                      <div className="text-lg text-secondary-foreground">
+                      <div className="text-lg text-secondary-foreground break-words">
                         {mainCourse.installments}
                       </div>
                     </div>

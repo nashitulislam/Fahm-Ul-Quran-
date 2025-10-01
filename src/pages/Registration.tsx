@@ -11,6 +11,7 @@ import { Upload, UserPlus } from 'lucide-react';
 import IdCard from '@/components/IdCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { allCourseTitles } from '@/lib/courseData';
 
 interface FormData {
   fullName: string;
@@ -47,14 +48,7 @@ const Registration = () => {
   const [showIdCard, setShowIdCard] = useState(false);
   const idCardRef = React.useRef<HTMLDivElement>(null);
 
-  const courses = [
-    'Fahm Ul Quran Diploma Course',
-    'Basic Islamic Studies',
-    'Arabic Language Course',
-    'Hadees Study Program',
-    'Islamic Jurisprudence (Fiqh)',
-    'Tajweed & Qirat'
-  ];
+  const courses = allCourseTitles;
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -164,15 +158,24 @@ const Registration = () => {
     if (showIdCard && idCardRef.current) {
       // Wait for card to render
       setTimeout(async () => {
-        const canvas = await html2canvas(idCardRef.current!, { scale: 2 });
+        // Capture the card element at a high scale to preserve quality
+        const canvas = await html2canvas(idCardRef.current!, { scale: 3, useCORS: true });
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
-        });
+
+        // Create A4 sized PDF (portrait) and also a landscape option depending on card aspect
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
         pdf.save('student-id-card.pdf');
+
+        // Also save instructions as separate PDF if present
+        const notesEl = document.querySelector('.print-visible .card + .card');
+        if (notesEl) {
+          const notesCanvas = await html2canvas(notesEl as HTMLElement, { scale: 3, useCORS: true });
+          const notesImg = notesCanvas.toDataURL('image/png');
+          const notesPdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [notesCanvas.width, notesCanvas.height] });
+          notesPdf.addImage(notesImg, 'PNG', 0, 0, notesCanvas.width, notesCanvas.height);
+          notesPdf.save('student-id-card-notes.pdf');
+        }
       }, 500);
     }
   }, [showIdCard]);
@@ -202,7 +205,7 @@ const Registration = () => {
           </div>
           <h1 className="text-4xl font-bold text-primary mb-4">Student Registration</h1>
           <p className="text-xl text-muted-foreground">
-            Fahm Ul Quran mein apni Islamic journey shuru kariye
+            Start your Islamic journey with Fahm-ul-Quran
           </p>
         </div>
 

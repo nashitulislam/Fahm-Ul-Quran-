@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Menu, X } from 'lucide-react';
@@ -17,7 +18,12 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+    <motion.nav
+      className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50"
+      initial={{ y: -40, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -89,7 +95,7 @@ const Navigation = () => {
           </div>
         )}
       </div>
-    </nav>
+  </motion.nav>
   );
 };
 

@@ -14,6 +14,7 @@ const Contact = () => {
     subject: '',
     message: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -21,6 +22,8 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return; // prevent duplicate submits
+    setSubmitting(true);
 
     // Prepare form data for formsubmit.co
     const data = new FormData();
@@ -35,6 +38,7 @@ const Contact = () => {
 
     // Send to formsubmit.co
     try {
+      // Try a normal fetch first (gives a real response when CORS is allowed)
       const response = await fetch('https://formsubmit.co/ashfaq.sr1974@gmail.com', {
         method: 'POST',
         body: data,
@@ -45,23 +49,59 @@ const Contact = () => {
           title: 'Message Sent!',
           description: 'Your message has been successfully sent to Fahm Ul Quran.',
         });
-        // Reset form after successful submission
-        setFormData({
-          name: '',
-          phone: '',
-          email: '',
-          subject: '',
-          message: '',
-        });
-      } else {
-        throw new Error('Failed to send message');
+        setFormData({ name: '', phone: '', email: '', subject: '', message: '' });
+        setSubmitting(false);
+        return;
       }
+
+      // If response is not ok (CORS or server returned error), fallback to plain form submit
     } catch (err) {
+      // Fetch failed (likely CORS or network). We'll fallback below.
+    }
+
+    try {
+      // Fallback: create a plain HTML form and submit it. Use target _blank so user isn't redirected away.
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://formsubmit.co/ashfaq.sr1974@gmail.com';
+      form.target = '_blank';
+
+      // Add hidden inputs for each field
+      Object.entries({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        _subject: 'New Contact Form Submission - Fahm Ul Quran',
+        _captcha: 'false',
+      }).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        // @ts-ignore
+        input.value = value || '';
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+
+      toast({
+        title: 'Message Sent!',
+        description: 'Your message has been sent (fallback).',
+      });
+      setFormData({ name: '', phone: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      // If the fallback also fails, show error toast
       toast({
         title: 'Submission Error',
         description: 'Could not send your message. Please try again later.',
         variant: 'destructive',
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -85,14 +125,14 @@ const Contact = () => {
             <div>
               <h2 className="text-3xl font-bold text-primary mb-8">Get In Touch</h2>
               
-              <div className="space-y-6">
-                <Card className="card-shadow">
+              <div className="grid grid-cols-1 gap-6">
+                <Card className="card-shadow w-full max-w-md mx-auto sm:max-w-none">
                   <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                       <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                         <MapPin className="w-6 h-6 text-primary-foreground" />
                       </div>
-                      <div>
+                      <div className="text-center sm:text-left">
                         <h3 className="font-semibold text-lg mb-2">Address</h3>
                         <p className="text-muted-foreground">
                           Jamia Masjid Rehmania <br />
@@ -105,9 +145,9 @@ const Contact = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="card-shadow">
+                <Card className="card-shadow w-full max-w-md mx-auto sm:max-w-none">
                   <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                       <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                         <Phone className="w-6 h-6 text-primary-foreground" />
                       </div>
@@ -123,9 +163,9 @@ const Contact = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="card-shadow">
+                <Card className="card-shadow w-full max-w-md mx-auto sm:max-w-none">
                   <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                       <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                         <Mail className="w-6 h-6 text-primary-foreground" />
                       </div>
@@ -141,9 +181,9 @@ const Contact = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="card-shadow">
+                <Card className="card-shadow w-full max-w-md mx-auto sm:max-w-none">
                   <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                       <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                         <Clock className="w-6 h-6 text-primary-foreground" />
                       </div>
@@ -239,8 +279,8 @@ const Contact = () => {
                       />
                     </div>
 
-                    <Button type="submit" variant="hero" className="w-full">
-                      Send Message
+                    <Button type="submit" variant="hero" className="w-full" disabled={submitting}>
+                      {submitting ? 'Sending…' : 'Send Message'}
                     </Button>
                   </form>
                   

@@ -1,0 +1,77 @@
+% idcard.tex - CR80 (85.6mm x 53.98mm) LaTeX template for Fahm Ul Quran student ID
+% Compile with: pdflatex idcard.tex
+\documentclass{standalone}
+\usepackage[paperwidth=85.6mm,paperheight=53.98mm,margin=2mm]{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{fontspec} % if using XeLaTeX or LuaLaTeX; otherwise comment out
+\definecolor{fahmgreen}{RGB}{17,97,46}
+\definecolor{lightgreen}{RGB}{220,245,220}
+\pagenumbering{gobble}
+
+% --- Editable fields ---
+\newcommand{\Institution}{Fahm Ul Quran}
+\newcommand{\StudentName}{[Your Name]}
+\newcommand{\FatherName}{[Your Father's Name]}
+\newcommand{\CourseName}{[Your Course, e.g., Basic Islamic Studies]}
+\newcommand{\StudentID}{[FQ126035]}
+\newcommand{\CNIC}{[Your CNIC Number]}
+\newcommand{\PhotoFile}{photo.png} % replace with student photo
+\newcommand{\QRCodeFile}{qrcode.png} % replace with QR code image
+\newcommand{\Contact}{Jamia Masjid Rehmania E-4 Block 8 Second Floor\\Department of Fahm Ul Quran Gulshan e iqbal karachi\\Phone: +92-343-2486038\\Email: ashfaq.sr1974@gmail.com}
+
+\begin{document}
+\thispagestyle{empty}
+\setlength{\fboxsep}{0pt}
+
+% Card background
+\begin{picture}(0,0)
+  \put(0,0){\color{lightgreen}\rule{85.6mm}{53.98mm}}
+\end{picture}
+
+\vspace*{2mm}
+\noindent
+\begin{minipage}[t][53.98mm][t]{85.6mm}
+  \begin{tabular}{@{}p{54mm} p{30mm}@{}}
+    % Left: textual content
+    \begin{minipage}[t]{54mm}
+      {\centering\color{fahmgreen}\bfseries\Large \Institution\\[3pt]}
+      \vspace{2pt}
+      {\centering\bfseries\small STUDENT ID CARD\\[6pt]}
+      \vspace{3pt}
+
+      \noindent\begin{tabular}{@{}p{22mm} p{30mm}}
+        \textbf{STUDENT:} & {\\textbf{\StudentName}} \\
+        \textbf{FATHER:} & {\FatherName} \\
+        \textbf{COURSE:} & {\CourseName} \\
+        \textbf{STUDENT ID:} & {\texttt{\StudentID}} \\
+        \textbf{CNIC:} & {\texttt{\CNIC}} \\
+      \end{tabular}
+
+    \end{minipage}
+    &
+    % Right: photo and QR
+    \begin{minipage}[t]{30mm}
+      \vspace{2mm}
+      \fbox{\begin{minipage}[c][36mm][c]{26mm}\centering
+        % Photo placeholder (replace with actual photo file)
+        \IfFileExists{\PhotoFile}{\includegraphics[width=26mm,height=36mm,keepaspectratio]{\PhotoFile}}{\rule{26mm}{36mm}\\[2pt] Photo}
+      \end{minipage}}
+      \\
+      \vspace{3pt}
+      \begin{center}
+        \IfFileExists{\QRCodeFile}{\includegraphics[width=22mm]{\QRCodeFile}}{\fbox{QR}}
+      \end{center}
+    \end{minipage}
+  \\
+  \end{tabular}
+
+  % Footer / notes
+  \vfill
+  \color{fahmgreen}\footnotesize\textbf{Notes:} Attestation required. Please bring CNIC and qualification documents. Punctuality is mandatory.\\
+  \vspace{2pt}
+  \small\Contact
+\end{minipage}
+
+\end{document}

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fahm Ul Quran - Student ID Card Template</title>
+  <style>
+    :root{
+      --fahm-green: #116328;
+      --light-green: #e8f7e9;
+      --muted: #6b7280;
+      --card-width-mm: 85.6mm;
+      --card-height-mm: 53.98mm;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, Arial, sans-serif;background:#f6f9f6;color:#0f172a}
+    .page{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+
+    /* Wrapper scales card responsively while keeping same aspect and visual size */
+    .card-viewport{display:flex;align-items:center;justify-content:center}
+    .card{
+      width:var(--card-width-mm);
+      height:var(--card-height-mm);
+      background:linear-gradient(180deg,var(--light-green),#fff);
+      border:2px solid var(--fahm-green);
+      border-radius:6px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+      display:flex;gap:12px;padding:8px;box-sizing:border-box;overflow:hidden;
+    }
+
+    .card .left{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:6px}
+    .card .right{width:30mm;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+    .institution{color:var(--fahm-green);font-weight:700;font-size:14px;text-align:center}
+    .arabic{font-family: 'Noto Naskh Arabic', serif;font-size:13px;display:block;text-align:center}
+    .title{font-weight:600;font-size:11px;color:var(--fahm-green);text-align:center}
+
+    .photo{width:26mm;height:36mm;border:2px solid var(--fahm-green);background:#f3f6f3;display:flex;align-items:center;justify-content:center}
+    .photo img{width:100%;height:100%;object-fit:cover}
+
+    .qr{width:22mm;height:22mm;border:1px solid #ddd;background:white;padding:4px;display:flex;align-items:center;justify-content:center}
+
+    .details{padding:6px}
+    .details p{margin:3px 0;font-size:10px}
+    .label{font-size:9px;color:var(--muted);display:block}
+    .value{font-weight:700;color:var(--fahm-green)}
+
+    .notes{max-width:360px;margin-left:8px}
+    .notes .card-inner{background:white;padding:10px;border-radius:6px;border:1px solid #e6eee6}
+    .notes h4{margin:0 0 6px 0;color:var(--fahm-green)}
+    .notes p{font-size:12px;margin:6px 0;color:#334155}
+
+    /* Responsive: side-by-side on wide screens, stacked on narrow */
+    @media (min-width:900px){
+      .layout{display:flex;gap:20px;align-items:flex-start}
+    }
+    @media (max-width:899px){
+      .layout{display:flex;flex-direction:column;gap:16px;align-items:center}
+      .notes{margin-left:0}
+    }
+
+    /* Print styles: ensure exact physical size on print and hide everything else */
+    @media print{
+      body *{visibility:hidden}
+      .card, .card *{visibility:visible}
+      .card{position:fixed;left:0;top:0;margin:0;}
+      @page{size: 85.6mm 53.98mm; margin:0}
+    }
+
+    /* small helper for preview scaling on narrow viewports */
+    .preview-scale{transform-origin:top left}
+    @media (max-width:480px){
+      .preview-scale{transform:scale(0.8)}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="layout">
+      <div class="card-viewport">
+        <div class="card preview-scale" role="region" aria-label="Student ID Card">
+          <div class="left">
+            <div>
+              <div class="arabic">فہم القرآن</div>
+              <div class="institution">Fahm Ul Quran</div>
+              <div class="title">STUDENT ID CARD</div>
+            </div>
+
+            <div class="details">
+              <p><span class="label">STUDENT NAME</span><span class="value">[Your Name]</span></p>
+              <p><span class="label">FATHER'S NAME</span><span class="value">[Your Father's Name]</span></p>
+              <p><span class="label">COURSE</span><span class="value">[Basic Islamic Studies]</span></p>
+              <p><span class="label">STUDENT ID</span><span class="value">[FQ126035]</span></p>
+              <p><span class="label">CNIC</span><span class="value">[XXXXX-XXXXXXX-X]</span></p>
+            </div>
+
+            <div style="font-size:10px;color:#32562b">\nContact: Jamia Masjid Rehmania, E-4 Block 8 | Phone: +92-343-2486038</div>
+          </div>
+
+          <div class="right">
+            <div class="photo" id="photoPlaceholder">
+              <span style="font-size:10px;color:#94a3b8">Photo</span>
+            </div>
+            <a class="qr" href="https://example.com/student/[FQ126035]" target="_blank" rel="noopener noreferrer" title="Open student profile">
+              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='%23fff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='10' fill='%23000'>QR</text></svg>" alt="QR placeholder"/>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes">
+        <div class="card-inner">
+          <h4>Instructions / Notes</h4>
+          <p><strong>Attestation:</strong> Attestation is mandatory. Get attested by Gazetted Officer or Principal.</p>
+          <p><strong>Punctuality:</strong> Be punctual for classes. Bring original CNIC & qualification documents when required.</p>
+          <p style="font-size:12px;color:#6b7280;margin-top:8px">Jamia Masjid Rehmania E-4 Block 8 Second Floor<br/>Department of Fahm Ul Quran Gulshan e iqbal karachi<br/>Phone: +92-343-2486038 | Email: ashfaq.sr1974@gmail.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Optional: allow replacing the photo placeholder when user selects a photo
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
+    function setPhotoFromFile(file){
+      const img = document.createElement('img');
+      img.onload = ()=>{ photoPlaceholder.innerHTML=''; photoPlaceholder.appendChild(img); };
+      img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
+      const reader = new FileReader(); reader.onload = e=> img.src = e.target.result; reader.readAsDataURL(file);
+    }
+    // Example usage: setPhotoFromFile(fileFromInput)
+  </script>
+</body>
+</html>
