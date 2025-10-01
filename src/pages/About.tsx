@@ -48,8 +48,9 @@ const About = () => {
                     </p>
                     
                     <p>
-                      Since 1999, Allama Maulana Mufti Muhammad Ashfaq Salikabadi Rehmani has been associated with Halaqah Rehmani, teaching Quran translation and Dars-e-Quran under the supervision of Hazrat Sufi Abrar Ahmad Rehmani (RA). His book Rooh-ul-Quran is widely used as a curriculum in many madaris.
-                    </p>
+                      Since 1999, Allama Maulana Mufti Muhammad Ashfaq Salikabadi Rehmani has been associated with Halaqah Rehmani under the supervision of Hazrat Sufi Abrar Ahmad Rehmani (RA). He is the author of the renowned book Rooh-ul-Quran, which has been adopted as a curriculum in many madaris. The system of translation, examinations, and teaching of Rooh-ul-Quran in these institutions is conducted under his guidance and consultation, while teaching is carried out by appointed teachers.
+                     </p>
+                    
                   </div>
                 </CardContent>
               </Card>
