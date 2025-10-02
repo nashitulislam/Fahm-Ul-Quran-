@@ -146,7 +146,7 @@ const Home = () => {
               Register Today
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Join the Fahm-ul-Quran Diploma Course and complete your Islamic education.
+              Join the Fahm-ul-Quran Diploma Course and the Degree in Sharia program to complete your Islamic education.
             </p>
             <Button variant="hero" size="lg" asChild>
               <Link to="/register">Start Your Journey</Link>
