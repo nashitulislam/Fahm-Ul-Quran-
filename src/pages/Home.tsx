@@ -90,7 +90,7 @@ const Home = () => {
                     Allama Maulana Mufti Muhammad Ashfaq Salikabadi Rehmani
                   </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    Supervising Quran translation and tafseer programs. His book <strong>“Rooh-Ul-Quran”</strong> is taught as a curriculum text in Rehmania institutes as well as other madaris. He also serves as the Khateeb and Imam of Jamia Masjid Rehmania, E-4 Block 8, Gulshan-e-Iqbal, Karachi.
+                    The supervision of the Fahm-ul-Quran Diploma Course and the Degree in Sharia program, along with Quran translation and tafseer programs, is under his guidance. His book <strong>“Rooh-Ul-Quran”</strong> is taught as a curriculum text in many madaris across Pakistan. He also serves as the Khateeb and Imam of Jamia Masjid Rehmania, E-4 Block 8, Gulshan-e-Iqbal, Karachi, where he delivers Quranic tafseer sermons every Friday.
 
 
                   </p>
