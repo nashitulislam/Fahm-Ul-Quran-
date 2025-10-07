@@ -101,6 +101,27 @@ export const otherCourses = [
     duration: '15 Months',
     description: 'Master the Arabic language from basic to advanced level.',
     price: 'Pay able Fee'
+  },
+  {
+    title: 'Fahm Ul Quran Course, Level One',
+    arabicTitle: 'فہم القرآن کورس، لیول 1',
+    duration: '5 Months',
+    description: 'Foundation of Quranic understanding.',
+    price: 'Pay able Fee'
+  },
+  {
+    title: 'Fahm Ul Quran Course, Level Two',
+    arabicTitle: 'فہم القرآن کورس، لیول 2',
+    duration: '5 Months',
+    description: 'Deeper study and reflection.',
+    price: 'Pay able Fee'
+  },
+  {
+    title: 'Fahm Ul Quran Course, Level Three',
+    arabicTitle: 'فہم القرآن کورس، لیول 3',
+    duration: '5 Months',
+    description: 'Advanced insight and application.',
+    price: 'Pay able Fee'
   }
 ];
 
