@@ -63,7 +63,7 @@ const Courses = () => {
       price: 'Pay able Fee'
     },
     {
-      title: 'Hifz-e-Quran (Selected Surahs)',
+      title: 'Hifz (Selected Surahs)',
       arabicTitle: 'حفظ قرآن (منتخب سورہ)',
       duration: '1 Year',
       description: 'Memorize selected Surahs and learn proper recitation.',
@@ -108,6 +108,27 @@ const Courses = () => {
       arabicTitle: 'عربی زبان کورس',
       duration: '15 Months',
       description: 'Master the Arabic language from basic to advanced level.',
+      price: 'Pay able Fee'
+    },    
+        {
+      title: 'Fahm Ul Quran Course, Level 1',
+      arabicTitle: 'فہم القرآن کورس، لیول 1',
+      duration: '5 Months',
+      description: 'Foundation of Quranic understanding.',
+      price: 'Pay able Fee'
+    },   
+        {
+      title: 'Fahm Ul Quran Course, Level 2',
+      arabicTitle: 'فہم القرآن کورس، لیول 2',
+      duration: '5 Months',
+      description: 'Deeper study and reflection.',
+      price: 'Pay able Fee'
+    },    
+        {
+      title: 'Fahm Ul Quran Course, Level 3',
+      arabicTitle: 'فہم القرآن کورس، لیول 3',
+      duration: '5 Months',
+      description: 'Advanced insight and application.',
       price: 'Pay able Fee'
     },    
   ];
