@@ -12,7 +12,7 @@ import IdCard from '@/components/IdCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { allCourseTitles } from '@/lib/courseData';
-import { supabase } from '@/supabase'; // ✅ Added Supabase import
+import { supabase } from '@/supabase'; // ✅ Supabase import
 
 interface FormData {
   fullName: string;
@@ -122,7 +122,7 @@ const Registration = () => {
     data.append('_captcha', 'false');
 
     try {
-      // ✅ Supabase insert
+      // ✅ Insert into Supabase
       const { data: supabaseData, error } = await supabase.from("students").insert([
         {
           full_name: formData.fullName,
@@ -140,34 +140,38 @@ const Registration = () => {
       ]);
 
       if (error) {
-        console.error("Supabase Error:", error);
+        console.error("Supabase Error:", error.message);
         toast({
           title: "Database Error",
-          description: "Failed to save data to Supabase.",
+          description: error.message,
           variant: "destructive",
         });
       } else {
-        console.log("Saved in Supabase:", supabaseData);
+        console.log("✅ Saved in Supabase:", supabaseData);
       }
 
-      // ✅ Email send
-      await fetch('https://formsubmit.co/ashfaq.sr1974@gmail.com', {
+      // ✅ Send Email using FormSubmit (ajax mode)
+      const response = await fetch('https://formsubmit.co/ajax/ashfaq.sr1974@gmail.com', {
         method: 'POST',
         body: data
       });
 
+      if (!response.ok) {
+        throw new Error("FormSubmit request failed");
+      }
+
       toast({
         title: "Registration Successful!",
-        description: `Student ID: ${studentId} - Saved in Supabase & Email sent.`,
+        description: `Student ID: ${studentId} - Data saved & email sent.`,
       });
 
       setFormData(prev => ({ ...prev, studentId }));
       setShowIdCard(true);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Submission Error:", err);
       toast({
         title: "Submission Failed",
-        description: "Please try again later.",
+        description: err.message || "Please try again later.",
         variant: "destructive"
       });
     }
@@ -217,7 +221,6 @@ const Registration = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Info */}
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-4">Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
