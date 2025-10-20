@@ -12,6 +12,7 @@ import IdCard from '@/components/IdCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { allCourseTitles } from '@/lib/courseData';
+import { supabase } from '@/supabase'; // ✅ Added Supabase import
 
 interface FormData {
   fullName: string;
@@ -47,7 +48,6 @@ const Registration = () => {
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [showIdCard, setShowIdCard] = useState(false);
   const idCardRef = React.useRef<HTMLDivElement>(null);
-
   const courses = allCourseTitles;
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -60,7 +60,7 @@ const Registration = () => {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "File too large",
           description: "Photo size should be less than 5MB",
@@ -68,24 +68,19 @@ const Registration = () => {
         });
         return;
       }
-      
       setFormData(prev => ({ ...prev, photo: file }));
-      
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotoPreview(e.target?.result as string);
-      };
+      reader.onload = (e) => setPhotoPreview(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const validateForm = (): boolean => {
-    const requiredFields = [
-      'fullName', 'fatherName', 'email', 'phone', 'cnic', 
+    const required = [
+      'fullName', 'fatherName', 'email', 'phone', 'cnic',
       'dateOfBirth', 'gender', 'address', 'course'
     ];
-    
-    for (const field of requiredFields) {
+    for (const field of required) {
       if (!formData[field as keyof FormData]) {
         toast({
           title: "Missing Information",
@@ -95,7 +90,6 @@ const Registration = () => {
         return false;
       }
     }
-    
     if (!formData.photo) {
       toast({
         title: "Photo Required",
@@ -104,19 +98,14 @@ const Registration = () => {
       });
       return false;
     }
-    
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
-    // Generate student ID once and store it
     const studentId = `FQ${Date.now().toString().slice(-6)}`;
-
-    // Prepare form data for formsubmit.co
     const data = new FormData();
     data.append('fullName', formData.fullName);
     data.append('fatherName', formData.fatherName);
@@ -132,50 +121,66 @@ const Registration = () => {
     if (formData.photo) data.append('photo', formData.photo);
     data.append('_captcha', 'false');
 
-    // Send to formsubmit.co
     try {
+      // ✅ Supabase insert
+      const { data: supabaseData, error } = await supabase.from("students").insert([
+        {
+          full_name: formData.fullName,
+          father_name: formData.fatherName,
+          email: formData.email,
+          phone: formData.phone,
+          whatsapp: formData.whatsapp,
+          cnic: formData.cnic,
+          date_of_birth: formData.dateOfBirth,
+          gender: formData.gender,
+          address: formData.address,
+          course: formData.course,
+          student_id: studentId,
+        },
+      ]);
+
+      if (error) {
+        console.error("Supabase Error:", error);
+        toast({
+          title: "Database Error",
+          description: "Failed to save data to Supabase.",
+          variant: "destructive",
+        });
+      } else {
+        console.log("Saved in Supabase:", supabaseData);
+      }
+
+      // ✅ Email send
       await fetch('https://formsubmit.co/ashfaq.sr1974@gmail.com', {
         method: 'POST',
         body: data
       });
+
       toast({
         title: "Registration Successful!",
-        description: `Student ID: ${studentId} - Your ID card is ready for download. Data sent to email.`,
+        description: `Student ID: ${studentId} - Saved in Supabase & Email sent.`,
       });
+
+      setFormData(prev => ({ ...prev, studentId }));
+      setShowIdCard(true);
     } catch (err) {
+      console.error(err);
       toast({
-        title: "Email Error",
-        description: "Could not send data to email.",
+        title: "Submission Failed",
+        description: "Please try again later.",
         variant: "destructive"
       });
     }
-
-    setFormData(prev => ({ ...prev, studentId }));
-    setShowIdCard(true);
   };
 
   React.useEffect(() => {
     if (showIdCard && idCardRef.current) {
-      // Wait for card to render
       setTimeout(async () => {
-        // Capture the card element at a high scale to preserve quality
         const canvas = await html2canvas(idCardRef.current!, { scale: 3, useCORS: true });
         const imgData = canvas.toDataURL('image/png');
-
-        // Create A4 sized PDF (portrait) and also a landscape option depending on card aspect
         const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [canvas.width, canvas.height] });
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
         pdf.save('student-id-card.pdf');
-
-        // Also save instructions as separate PDF if present
-        const notesEl = document.querySelector('.print-visible .card + .card');
-        if (notesEl) {
-          const notesCanvas = await html2canvas(notesEl as HTMLElement, { scale: 3, useCORS: true });
-          const notesImg = notesCanvas.toDataURL('image/png');
-          const notesPdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [notesCanvas.width, notesCanvas.height] });
-          notesPdf.addImage(notesImg, 'PNG', 0, 0, notesCanvas.width, notesCanvas.height);
-          notesPdf.save('student-id-card-notes.pdf');
-        }
       }, 500);
     }
   }, [showIdCard]);
@@ -183,7 +188,7 @@ const Registration = () => {
   if (showIdCard) {
     return (
       <div ref={idCardRef}>
-        <IdCard 
+        <IdCard
           studentData={{
             ...formData,
             studentId: formData.studentId || `FQ${Date.now().toString().slice(-6)}`,
@@ -198,127 +203,59 @@ const Registration = () => {
   return (
     <div className="py-16 px-4 bg-muted/30">
       <div className="container mx-auto max-w-4xl">
-        {/* Header */}
         <div className="text-center mb-12">
           <div className="w-16 h-16 bg-primary rounded-full mx-auto mb-4 flex items-center justify-center">
             <UserPlus className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-4xl font-bold text-primary mb-4">Student Registration</h1>
-          <p className="text-xl text-muted-foreground">
-            Start your Islamic journey with Fahm-ul-Quran
-          </p>
+          <p className="text-xl text-muted-foreground">Start your Islamic journey with Fahm-ul-Quran</p>
         </div>
 
         <Card className="card-shadow">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary text-center">
-              Registration Form
-            </CardTitle>
+            <CardTitle className="text-2xl text-primary text-center">Registration Form</CardTitle>
           </CardHeader>
-          
           <CardContent>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-6"
-            >
-              {/* Personal Information */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Info */}
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-4">Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    { id: 'fullName', label: 'Full Name', placeholder: 'Enter your full name' },
+                    { id: 'fatherName', label: "Father's Name", placeholder: 'Enter father name' },
+                    { id: 'email', label: 'Email', placeholder: 'your.email@example.com' },
+                    { id: 'phone', label: 'Phone', placeholder: '+92-300-1234567' },
+                    { id: 'whatsapp', label: 'WhatsApp', placeholder: '+92-300-1234567' },
+                    { id: 'cnic', label: 'CNIC', placeholder: '12345-6789012-3' },
+                  ].map(({ id, label, placeholder }) => (
+                    <div key={id}>
+                      <Label htmlFor={id}>{label}</Label>
+                      <Input
+                        id={id}
+                        type="text"
+                        placeholder={placeholder}
+                        value={formData[id as keyof FormData] as string}
+                        onChange={(e) => handleInputChange(id as keyof FormData, e.target.value)}
+                        required
+                      />
+                    </div>
+                  ))}
                   <div>
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="fatherName">Father's Name *</Label>
-                    <Input
-                      id="fatherName"
-                      name="fatherName"
-                      type="text"
-                      placeholder="Enter father's name"
-                      value={formData.fatherName}
-                      onChange={(e) => handleInputChange('fatherName', e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+92-300-123-4567"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                    <Input
-                      id="whatsapp"
-                      name="whatsapp"
-                      type="tel"
-                      placeholder="+92-300-123-4567"
-                      value={formData.whatsapp}
-                      onChange={(e) => handleInputChange('whatsapp', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="cnic">CNIC Number *</Label>
-                    <Input
-                      id="cnic"
-                      name="cnic"
-                      type="text"
-                      placeholder="12345-6789012-3"
-                      value={formData.cnic}
-                      onChange={(e) => handleInputChange('cnic', e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
                     <Input
                       id="dateOfBirth"
-                      name="dateOfBirth"
                       type="date"
                       value={formData.dateOfBirth}
                       onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
                       required
                     />
                   </div>
-                  
                   <div>
-                    <Label>Gender *</Label>
+                    <Label>Gender</Label>
                     <RadioGroup
                       value={formData.gender}
-                      onValueChange={(value) => handleInputChange('gender', value)}
+                      onValueChange={(v) => handleInputChange('gender', v)}
                       className="flex space-x-6 mt-2"
                     >
                       <div className="flex items-center space-x-2">
@@ -334,77 +271,43 @@ const Registration = () => {
                 </div>
               </div>
 
-              {/* Address */}
               <div>
-                <Label htmlFor="address">Full Address *</Label>
+                <Label htmlFor="address">Full Address</Label>
                 <Textarea
                   id="address"
-                  name="address"
-                  placeholder="Enter your complete address..."
+                  placeholder="Enter complete address..."
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   required
                 />
               </div>
 
-              {/* Course Selection */}
               <div>
-                <Label htmlFor="course">Select Course *</Label>
-                <Select value={formData.course} onValueChange={(value) => handleInputChange('course', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose your preferred course" />
-                  </SelectTrigger>
+                <Label htmlFor="course">Select Course</Label>
+                <Select value={formData.course} onValueChange={(v) => handleInputChange('course', v)}>
+                  <SelectTrigger><SelectValue placeholder="Choose course" /></SelectTrigger>
                   <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course} value={course}>
-                        {course}
-                      </SelectItem>
-                    ))}
+                    {courses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Photo Upload */}
               <div>
-                <Label htmlFor="photo">Upload Photo *</Label>
-                <div className="mt-2">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-1">
-                      <Input
-                        id="photo"
-                        name="photo"
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                      <Label
-                        htmlFor="photo"
-                        className="flex items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="text-center">
-                          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">
-                            Click to upload photo (Max 5MB)
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    
-                    {photoPreview && (
-                      <div className="w-32 h-32">
-                        <img
-                          src={photoPreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover rounded-lg border-2 border-border"
-                        />
-                      </div>
-                    )}
-                  </div>
+                <Label htmlFor="photo">Upload Photo</Label>
+                <div className="flex items-center space-x-4 mt-2">
+                  <Label
+                    htmlFor="photo"
+                    className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50"
+                  >
+                    <Upload className="w-8 h-8 text-muted-foreground mr-2" /> Click to upload (Max 5MB)
+                  </Label>
+                  <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  {photoPreview && (
+                    <img src={photoPreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
+                  )}
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="text-center pt-6">
                 <Button type="submit" variant="hero" size="lg" className="w-full md:w-auto">
                   Submit Registration
