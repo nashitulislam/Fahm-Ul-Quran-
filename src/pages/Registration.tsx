@@ -12,7 +12,7 @@ import IdCard from '@/components/IdCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { allCourseTitles } from '@/lib/courseData';
-import { supabase } from '@/supabase'; // ✅ Supabase import
+import { supabase } from '@/supabase';
 
 interface FormData {
   fullName: string;
@@ -104,9 +104,9 @@ const Registration = () => {
 
     const studentId = `FQ${Date.now().toString().slice(-6)}`;
 
-    // ✅ Supabase insert into registration table
     try {
-      const { data: supabaseData, error } = await supabase.from("registration").insert([
+      // ✅ Insert into Supabase registrations table
+      const { data: supabaseData, error } = await supabase.from("registrations").insert([
         {
           student_id: studentId,
           full_name: formData.fullName,
@@ -211,7 +211,7 @@ const Registration = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
+              {/* Personal Info */}
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-4">Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -320,4 +320,3 @@ const Registration = () => {
 };
 
 export default Registration;
-
