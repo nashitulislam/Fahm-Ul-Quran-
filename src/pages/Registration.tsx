@@ -12,7 +12,7 @@ import IdCard from '@/components/IdCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { allCourseTitles } from '@/lib/courseData';
-import { supabase } from '@/supabase'; // ✅ Added import for Supabase
+import { supabase } from '@/supabase'; // ✅ Supabase import
 
 interface FormData {
   fullName: string;
@@ -48,7 +48,6 @@ const Registration = () => {
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [showIdCard, setShowIdCard] = useState(false);
   const idCardRef = React.useRef<HTMLDivElement>(null);
-
   const courses = allCourseTitles;
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -61,7 +60,7 @@ const Registration = () => {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "File too large",
           description: "Photo size should be less than 5MB",
@@ -69,24 +68,19 @@ const Registration = () => {
         });
         return;
       }
-      
       setFormData(prev => ({ ...prev, photo: file }));
-      
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotoPreview(e.target?.result as string);
-      };
+      reader.onload = (e) => setPhotoPreview(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const validateForm = (): boolean => {
-    const requiredFields = [
-      'fullName', 'fatherName', 'email', 'phone', 'cnic', 
+    const required = [
+      'fullName', 'fatherName', 'email', 'phone', 'cnic',
       'dateOfBirth', 'gender', 'address', 'course'
     ];
-    
-    for (const field of requiredFields) {
+    for (const field of required) {
       if (!formData[field as keyof FormData]) {
         toast({
           title: "Missing Information",
@@ -96,7 +90,6 @@ const Registration = () => {
         return false;
       }
     }
-    
     if (!formData.photo) {
       toast({
         title: "Photo Required",
@@ -105,18 +98,14 @@ const Registration = () => {
       });
       return false;
     }
-    
     return true;
   };
 
-  // ✅ UPDATED HANDLE SUBMIT FUNCTION
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     const studentId = `FQ${Date.now().toString().slice(-6)}`;
-
     const data = new FormData();
     data.append('fullName', formData.fullName);
     data.append('fatherName', formData.fatherName);
@@ -133,8 +122,8 @@ const Registration = () => {
     data.append('_captcha', 'false');
 
     try {
-      // ✅ Step 1: Save to Supabase
-      const { error } = await supabase.from("registrations").insert([
+      // ✅ Insert into Supabase
+      const { data: supabaseData, error } = await supabase.from("students").insert([
         {
           full_name: formData.fullName,
           father_name: formData.fatherName,
@@ -151,33 +140,39 @@ const Registration = () => {
       ]);
 
       if (error) {
-        console.error("Supabase Error:", error);
+        console.error("Supabase Error:", error.message);
         toast({
           title: "Database Error",
-          description: "Failed to save data to Supabase.",
+          description: error.message,
           variant: "destructive",
         });
+      } else {
+        console.log("✅ Saved in Supabase:", supabaseData);
       }
 
-      // ✅ Step 2: Send to FormSubmit (Email)
-      await fetch("https://formsubmit.co/ashfaq.sr1974@gmail.com", {
-        method: "POST",
-        body: data,
+      // ✅ Send Email using FormSubmit (ajax mode)
+      const response = await fetch('https://formsubmit.co/ajax/ashfaq.sr1974@gmail.com', {
+        method: 'POST',
+        body: data
       });
+
+      if (!response.ok) {
+        throw new Error("FormSubmit request failed");
+      }
 
       toast({
         title: "Registration Successful!",
-        description: `Student ID: ${studentId} — Saved in Supabase & Email sent.`,
+        description: `Student ID: ${studentId} - Data saved & email sent.`,
       });
 
       setFormData(prev => ({ ...prev, studentId }));
       setShowIdCard(true);
-    } catch (err) {
-      console.error("Submit Error:", err);
+    } catch (err: any) {
+      console.error("Submission Error:", err);
       toast({
         title: "Submission Failed",
-        description: "Please try again later.",
-        variant: "destructive",
+        description: err.message || "Please try again later.",
+        variant: "destructive"
       });
     }
   };
@@ -197,7 +192,7 @@ const Registration = () => {
   if (showIdCard) {
     return (
       <div ref={idCardRef}>
-        <IdCard 
+        <IdCard
           studentData={{
             ...formData,
             studentId: formData.studentId || `FQ${Date.now().toString().slice(-6)}`,
@@ -217,55 +212,55 @@ const Registration = () => {
             <UserPlus className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-4xl font-bold text-primary mb-4">Student Registration</h1>
-          <p className="text-xl text-muted-foreground">
-            Start your Islamic journey with Fahm-ul-Quran
-          </p>
+          <p className="text-xl text-muted-foreground">Start your Islamic journey with Fahm-ul-Quran</p>
         </div>
 
         <Card className="card-shadow">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary text-center">
-              Registration Form
-            </CardTitle>
+            <CardTitle className="text-2xl text-primary text-center">Registration Form</CardTitle>
           </CardHeader>
-          
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Info */}
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-4">Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    { id: 'fullName', label: 'Full Name', placeholder: 'Enter your full name' },
+                    { id: 'fatherName', label: "Father's Name", placeholder: 'Enter father name' },
+                    { id: 'email', label: 'Email', placeholder: 'your.email@example.com' },
+                    { id: 'phone', label: 'Phone', placeholder: '+92-300-1234567' },
+                    { id: 'whatsapp', label: 'WhatsApp', placeholder: '+92-300-1234567' },
+                    { id: 'cnic', label: 'CNIC', placeholder: '12345-6789012-3' },
+                  ].map(({ id, label, placeholder }) => (
+                    <div key={id}>
+                      <Label htmlFor={id}>{label}</Label>
+                      <Input
+                        id={id}
+                        type="text"
+                        placeholder={placeholder}
+                        value={formData[id as keyof FormData] as string}
+                        onChange={(e) => handleInputChange(id as keyof FormData, e.target.value)}
+                        required
+                      />
+                    </div>
+                  ))}
                   <div>
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input id="fullName" value={formData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} required />
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                      required
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="fatherName">Father's Name *</Label>
-                    <Input id="fatherName" value={formData.fatherName} onChange={(e) => handleInputChange('fatherName', e.target.value)} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" value={formData.email} onChange={(e) => handleInputChange('email', e.target.value)} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone *</Label>
-                    <Input id="phone" type="tel" value={formData.phone} onChange={(e) => handleInputChange('phone', e.target.value)} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="whatsapp">WhatsApp</Label>
-                    <Input id="whatsapp" type="tel" value={formData.whatsapp} onChange={(e) => handleInputChange('whatsapp', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="cnic">CNIC *</Label>
-                    <Input id="cnic" value={formData.cnic} onChange={(e) => handleInputChange('cnic', e.target.value)} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                    <Input id="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={(e) => handleInputChange('dateOfBirth', e.target.value)} required />
-                  </div>
-                  <div>
-                    <Label>Gender *</Label>
-                    <RadioGroup value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)} className="flex space-x-6 mt-2">
+                    <Label>Gender</Label>
+                    <RadioGroup
+                      value={formData.gender}
+                      onValueChange={(v) => handleInputChange('gender', v)}
+                      className="flex space-x-6 mt-2"
+                    >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="male" id="male" />
                         <Label htmlFor="male">Male</Label>
@@ -279,42 +274,39 @@ const Registration = () => {
                 </div>
               </div>
 
-              {/* Address */}
               <div>
-                <Label htmlFor="address">Full Address *</Label>
-                <Textarea id="address" value={formData.address} onChange={(e) => handleInputChange('address', e.target.value)} required />
+                <Label htmlFor="address">Full Address</Label>
+                <Textarea
+                  id="address"
+                  placeholder="Enter complete address..."
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  required
+                />
               </div>
 
-              {/* Course */}
               <div>
-                <Label htmlFor="course">Select Course *</Label>
-                <Select value={formData.course} onValueChange={(value) => handleInputChange('course', value)}>
-                  <SelectTrigger><SelectValue placeholder="Choose your course" /></SelectTrigger>
+                <Label htmlFor="course">Select Course</Label>
+                <Select value={formData.course} onValueChange={(v) => handleInputChange('course', v)}>
+                  <SelectTrigger><SelectValue placeholder="Choose course" /></SelectTrigger>
                   <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course} value={course}>{course}</SelectItem>
-                    ))}
+                    {courses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Photo Upload */}
               <div>
-                <Label htmlFor="photo">Upload Photo *</Label>
-                <div className="flex items-center space-x-4">
-                  <div className="flex-1">
-                    <Input id="photo" type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                    <Label htmlFor="photo" className="flex items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                      <div className="text-center">
-                        <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">Click to upload photo (Max 5MB)</p>
-                      </div>
-                    </Label>
-                  </div>
+                <Label htmlFor="photo">Upload Photo</Label>
+                <div className="flex items-center space-x-4 mt-2">
+                  <Label
+                    htmlFor="photo"
+                    className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50"
+                  >
+                    <Upload className="w-8 h-8 text-muted-foreground mr-2" /> Click to upload (Max 5MB)
+                  </Label>
+                  <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                   {photoPreview && (
-                    <div className="w-32 h-32">
-                      <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-lg border-2 border-border" />
-                    </div>
+                    <img src={photoPreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
                   )}
                 </div>
               </div>
@@ -333,6 +325,3 @@ const Registration = () => {
 };
 
 export default Registration;
-
-
-
