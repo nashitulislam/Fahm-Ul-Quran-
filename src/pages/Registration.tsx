@@ -123,7 +123,7 @@ const Registration = () => {
 
     try {
       // ✅ Insert into Supabase
-      const { data: supabaseData, error } = await supabase.from("registration").insert([
+      const { data: supabaseData, error } = await supabase.from("registrations").insert([
         {
           full_name: formData.fullName,
           father_name: formData.fatherName,
