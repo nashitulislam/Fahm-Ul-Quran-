@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,6 @@ import { Upload, UserPlus } from 'lucide-react';
 import IdCard from '@/components/IdCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { allCourseTitles } from '@/lib/courseData';
 import { supabase } from '@/supabase';
 
 interface FormData {
@@ -28,6 +27,14 @@ interface FormData {
   photo: File | null;
   studentId?: string;
 }
+
+const allCourseTitles = [
+  'Quran Basics',
+  'Tajweed',
+  'Hifz',
+  'Arabic Grammar',
+  'Islamic Studies'
+];
 
 const Registration = () => {
   const { toast } = useToast();
@@ -47,7 +54,7 @@ const Registration = () => {
   });
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [showIdCard, setShowIdCard] = useState(false);
-  const idCardRef = React.useRef<HTMLDivElement>(null);
+  const idCardRef = useRef<HTMLDivElement>(null);
   const courses = allCourseTitles;
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -58,11 +65,7 @@ const Registration = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Photo size should be less than 5MB",
-          variant: "destructive"
-        });
+        toast({ title: "File too large", description: "Photo size should be less than 5MB", variant: "destructive" });
         return;
       }
       setFormData(prev => ({ ...prev, photo: file }));
@@ -73,26 +76,15 @@ const Registration = () => {
   };
 
   const validateForm = (): boolean => {
-    const required = [
-      'fullName', 'fatherName', 'email', 'phone', 'cnic',
-      'dateOfBirth', 'gender', 'address', 'course'
-    ];
+    const required: (keyof FormData)[] = ['fullName', 'fatherName', 'email', 'phone', 'whatsapp', 'cnic', 'dateOfBirth', 'gender', 'address', 'course'];
     for (const field of required) {
-      if (!formData[field as keyof FormData]) {
-        toast({
-          title: "Missing Information",
-          description: `Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
-          variant: "destructive"
-        });
+      if (!formData[field]) {
+        toast({ title: "Missing Information", description: `Please fill ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, variant: "destructive" });
         return false;
       }
     }
     if (!formData.photo) {
-      toast({
-        title: "Photo Required",
-        description: "Please upload your photo",
-        variant: "destructive"
-      });
+      toast({ title: "Photo Required", description: "Please upload your photo", variant: "destructive" });
       return false;
     }
     return true;
@@ -103,71 +95,51 @@ const Registration = () => {
     if (!validateForm()) return;
 
     const studentId = `FQ${Date.now().toString().slice(-6)}`;
+    let photoUrl = '';
 
-    try {
-      // ✅ Insert into Supabase registrations table
-      const { data: supabaseData, error } = await supabase.from("registrations").insert([
-        {
-          student_id: studentId,
-          full_name: formData.fullName,
-          father_name: formData.fatherName,
-          email: formData.email,
-          phone: formData.phone,
-          whatsapp: formData.whatsapp,
-          cnic: formData.cnic,
-          date_of_birth: formData.dateOfBirth,
-          gender: formData.gender,
-          address: formData.address,
-          course: formData.course,
-        },
-      ]);
-
-      if (error) {
-        console.error("Supabase Error:", error.message);
-        toast({
-          title: "Database Error",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
+    // Photo upload to Supabase storage
+    if (formData.photo) {
+      const fileExt = formData.photo.name.split('.').pop();
+      const fileName = `${studentId}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('student-photos').upload(fileName, formData.photo, { upsert: true });
+      if (uploadError) {
+        toast({ title: "Photo Upload Failed", description: uploadError.message, variant: "destructive" });
       } else {
-        console.log("✅ Saved in Supabase:", supabaseData);
+        const { publicURL } = supabase.storage.from('student-photos').getPublicUrl(fileName);
+        photoUrl = publicURL || '';
       }
-
-      // ✅ FormSubmit email
-      const form = new FormData();
-      Object.entries({
-        ...formData,
-        studentId
-      }).forEach(([key, value]) => form.append(key, value as string | Blob));
-      if (formData.photo) form.append('photo', formData.photo);
-      form.append('_captcha', 'false');
-
-      const response = await fetch('https://formsubmit.co/ajax/ashfaq.sr1974@gmail.com', {
-        method: 'POST',
-        body: form
-      });
-
-      if (!response.ok) throw new Error("FormSubmit request failed");
-
-      toast({
-        title: "Registration Successful!",
-        description: `Student ID: ${studentId} - Data saved & email sent.`,
-      });
-
-      setFormData(prev => ({ ...prev, studentId }));
-      setShowIdCard(true);
-    } catch (err: any) {
-      console.error("Submission Error:", err);
-      toast({
-        title: "Submission Failed",
-        description: err.message || "Please try again later.",
-        variant: "destructive"
-      });
     }
+
+    // Insert data into registrations table
+    const { data, error } = await supabase.from('registrations').insert([
+      {
+        student_id: studentId,
+        full_name: formData.fullName,
+        father_name: formData.fatherName,
+        email: formData.email,
+        phone: formData.phone,
+        whatsapp: formData.whatsapp,
+        cnic: formData.cnic,
+        date_of_birth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: formData.address,
+        course: formData.course,
+        photo_url: photoUrl,
+      },
+    ]);
+
+    if (error) {
+      toast({ title: "Database Error", description: error.message, variant: "destructive" });
+      console.error(error);
+      return;
+    }
+
+    toast({ title: "Registration Successful!", description: `Student ID: ${studentId}` });
+    setFormData(prev => ({ ...prev, studentId }));
+    setShowIdCard(true);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (showIdCard && idCardRef.current) {
       setTimeout(async () => {
         const canvas = await html2canvas(idCardRef.current!, { scale: 3, useCORS: true });
@@ -211,55 +183,32 @@ const Registration = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+
               {/* Personal Info */}
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-4">Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    { id: 'fullName', label: 'Full Name', placeholder: 'Enter your full name' },
-                    { id: 'fatherName', label: "Father's Name", placeholder: 'Enter father name' },
-                    { id: 'email', label: 'Email', placeholder: 'your.email@example.com' },
-                    { id: 'phone', label: 'Phone', placeholder: '+92-300-1234567' },
-                    { id: 'whatsapp', label: 'WhatsApp', placeholder: '+92-300-1234567' },
-                    { id: 'cnic', label: 'CNIC', placeholder: '12345-6789012-3' },
-                  ].map(({ id, label, placeholder }) => (
-                    <div key={id}>
-                      <Label htmlFor={id}>{label}</Label>
+                  {['fullName','fatherName','email','phone','whatsapp','cnic'].map((field) => (
+                    <div key={field}>
+                      <Label htmlFor={field}>{field.replace(/([A-Z])/g, ' $1')}</Label>
                       <Input
-                        id={id}
+                        id={field}
                         type="text"
-                        placeholder={placeholder}
-                        value={formData[id as keyof FormData] as string}
-                        onChange={(e) => handleInputChange(id as keyof FormData, e.target.value)}
+                        value={formData[field as keyof FormData] as string}
+                        onChange={(e) => handleInputChange(field as keyof FormData, e.target.value)}
                         required
                       />
                     </div>
                   ))}
                   <div>
                     <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                      required
-                    />
+                    <Input id="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={(e)=>handleInputChange('dateOfBirth', e.target.value)} required/>
                   </div>
                   <div>
                     <Label>Gender</Label>
-                    <RadioGroup
-                      value={formData.gender}
-                      onValueChange={(v) => handleInputChange('gender', v)}
-                      className="flex space-x-6 mt-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="male" id="male" />
-                        <Label htmlFor="male">Male</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="female" id="female" />
-                        <Label htmlFor="female">Female</Label>
-                      </div>
+                    <RadioGroup value={formData.gender} onValueChange={(v)=>handleInputChange('gender',v)} className="flex space-x-6 mt-2">
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="male" id="male"/><Label htmlFor="male">Male</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="female" id="female"/><Label htmlFor="female">Female</Label></div>
                     </RadioGroup>
                   </div>
                 </div>
@@ -268,49 +217,35 @@ const Registration = () => {
               {/* Address */}
               <div>
                 <Label htmlFor="address">Full Address</Label>
-                <Textarea
-                  id="address"
-                  placeholder="Enter complete address..."
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  required
-                />
+                <Textarea id="address" placeholder="Enter complete address..." value={formData.address} onChange={(e)=>handleInputChange('address',e.target.value)} required/>
               </div>
 
               {/* Course */}
               <div>
                 <Label htmlFor="course">Select Course</Label>
-                <Select value={formData.course} onValueChange={(v) => handleInputChange('course', v)}>
-                  <SelectTrigger><SelectValue placeholder="Choose course" /></SelectTrigger>
-                  <SelectContent>
-                    {courses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
+                <Select value={formData.course} onValueChange={(v)=>handleInputChange('course',v)}>
+                  <SelectTrigger><SelectValue placeholder="Choose course"/></SelectTrigger>
+                  <SelectContent>{courses.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
-              {/* Photo Upload */}
+              {/* Photo */}
               <div>
                 <Label htmlFor="photo">Upload Photo</Label>
                 <div className="flex items-center space-x-4 mt-2">
-                  <Label
-                    htmlFor="photo"
-                    className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50"
-                  >
-                    <Upload className="w-8 h-8 text-muted-foreground mr-2" /> Click to upload (Max 5MB)
+                  <Label htmlFor="photo" className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
+                    <Upload className="w-8 h-8 text-muted-foreground mr-2"/> Click to upload (Max 5MB)
                   </Label>
-                  <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                  {photoPreview && (
-                    <img src={photoPreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
-                  )}
+                  <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload}/>
+                  {photoPreview && <img src={photoPreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg border"/>}
                 </div>
               </div>
 
               {/* Submit */}
               <div className="text-center pt-6">
-                <Button type="submit" variant="hero" size="lg" className="w-full md:w-auto">
-                  Submit Registration
-                </Button>
+                <Button type="submit" variant="hero" size="lg" className="w-full md:w-auto">Submit Registration</Button>
               </div>
+
             </form>
           </CardContent>
         </Card>
@@ -320,3 +255,5 @@ const Registration = () => {
 };
 
 export default Registration;
+
+
