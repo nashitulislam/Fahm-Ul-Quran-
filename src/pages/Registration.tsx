@@ -51,10 +51,7 @@ const Registration = () => {
   const courses = allCourseTitles;
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,25 +103,12 @@ const Registration = () => {
     if (!validateForm()) return;
 
     const studentId = `FQ${Date.now().toString().slice(-6)}`;
-    const data = new FormData();
-    data.append('fullName', formData.fullName);
-    data.append('fatherName', formData.fatherName);
-    data.append('email', formData.email);
-    data.append('phone', formData.phone);
-    data.append('whatsapp', formData.whatsapp);
-    data.append('cnic', formData.cnic);
-    data.append('dateOfBirth', formData.dateOfBirth);
-    data.append('gender', formData.gender);
-    data.append('address', formData.address);
-    data.append('course', formData.course);
-    data.append('studentId', studentId);
-    if (formData.photo) data.append('photo', formData.photo);
-    data.append('_captcha', 'false');
 
+    // ✅ Supabase insert into registration table
     try {
-      // ✅ Insert into Supabase
-      const { data: supabaseData, error } = await supabase.from("registrations").insert([
+      const { data: supabaseData, error } = await supabase.from("registration").insert([
         {
+          student_id: studentId,
           full_name: formData.fullName,
           father_name: formData.fatherName,
           email: formData.email,
@@ -135,7 +119,6 @@ const Registration = () => {
           gender: formData.gender,
           address: formData.address,
           course: formData.course,
-          student_id: studentId,
         },
       ]);
 
@@ -146,19 +129,26 @@ const Registration = () => {
           description: error.message,
           variant: "destructive",
         });
+        return;
       } else {
         console.log("✅ Saved in Supabase:", supabaseData);
       }
 
-      // ✅ Send Email using FormSubmit (ajax mode)
+      // ✅ FormSubmit email
+      const form = new FormData();
+      Object.entries({
+        ...formData,
+        studentId
+      }).forEach(([key, value]) => form.append(key, value as string | Blob));
+      if (formData.photo) form.append('photo', formData.photo);
+      form.append('_captcha', 'false');
+
       const response = await fetch('https://formsubmit.co/ajax/ashfaq.sr1974@gmail.com', {
         method: 'POST',
-        body: data
+        body: form
       });
 
-      if (!response.ok) {
-        throw new Error("FormSubmit request failed");
-      }
+      if (!response.ok) throw new Error("FormSubmit request failed");
 
       toast({
         title: "Registration Successful!",
@@ -221,6 +211,7 @@ const Registration = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information */}
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-4">Personal Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -274,6 +265,7 @@ const Registration = () => {
                 </div>
               </div>
 
+              {/* Address */}
               <div>
                 <Label htmlFor="address">Full Address</Label>
                 <Textarea
@@ -285,6 +277,7 @@ const Registration = () => {
                 />
               </div>
 
+              {/* Course */}
               <div>
                 <Label htmlFor="course">Select Course</Label>
                 <Select value={formData.course} onValueChange={(v) => handleInputChange('course', v)}>
@@ -295,6 +288,7 @@ const Registration = () => {
                 </Select>
               </div>
 
+              {/* Photo Upload */}
               <div>
                 <Label htmlFor="photo">Upload Photo</Label>
                 <div className="flex items-center space-x-4 mt-2">
@@ -311,6 +305,7 @@ const Registration = () => {
                 </div>
               </div>
 
+              {/* Submit */}
               <div className="text-center pt-6">
                 <Button type="submit" variant="hero" size="lg" className="w-full md:w-auto">
                   Submit Registration
@@ -325,3 +320,4 @@ const Registration = () => {
 };
 
 export default Registration;
+
